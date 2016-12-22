@@ -1,0 +1,8 @@
+- name: fix patch file
+  lineinfile:
+    dest: /usr/local/freeradius-src/freeradius-server-3.0.12/debian/patches/disable-dhcp-bydefault.diff
+    regexp: (.*cache_eap chap)
+    backrefs: yes
+    line: \1 date \\
+  tags:
+    - fix-patch-file-error

@@ -1,0 +1,74 @@
+---
+- name: install build tools
+  become: true
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - debhelper
+    - autotools-dev
+    - libcurl4-gnutls-dev
+    - libcap-dev
+    - libgdbm-dev
+    - libiodbc2-dev
+    - libjson0-dev
+    - libjson-c-dev
+    - libkrb5-dev
+    - libldap2-dev
+    - libpam0g-dev
+    - libpcap-dev
+    - libperl-dev
+    - libmysqlclient-dev
+    - libpq-dev
+    - libreadline-dev
+    - libsasl2-dev
+    - libsqlite3-dev
+    - libssl-dev
+    - libtalloc-dev
+    - libwbclient-dev
+    - libyubikey-dev
+    - libykclient-dev
+    - libmemcached-dev
+    - libhiredis-dev
+    - python-dev
+    - samba-dev
+    - quilt
+    - dpkg-dev
+    - ssl-cert
+    - vim
+  tags:
+    - freeradius_src-install-build-tools
+
+- name: create build folder
+  file:
+    path: /usr/local/freeradius-src
+    state: directory
+  tags:
+    - freeradius_src-create-shared-folder
+
+- name: get freeradius source
+  unarchive:
+    src: "http://ftp.cc.uoc.gr/mirrors/ftp.freeradius.org/freeradius-server-{{ version|string }}.tar.gz"
+    copy: no
+    dest: /usr/local/freeradius-src/
+  tags:
+    - freeradius_src-prepare-source-code
+
+- name: version 3.0.12 patch fix
+  include: 3.0.12.yml
+  when: version|string == '3.0.12'
+  tags:
+    - freeradius_src-3.0.12-fixes
+
+- name: execute build
+  command: fakeroot dpkg-buildpackage -b -uc
+  args:
+    chdir: "/usr/local/freeradius-src/freeradius-server-{{ version|string }}"
+  tags:
+    - freeradius_src-build-packages
+
+- name: move .deb files
+  shell: "mv /usr/local/freeradius-src/*.deb {{ shared_folder }}"
+  tags:
+    - freeradius_src-move-debs-to-shared-folder
